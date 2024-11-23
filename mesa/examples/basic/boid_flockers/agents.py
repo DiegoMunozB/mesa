@@ -5,9 +5,7 @@ of flocking behavior.
 """
 
 import numpy as np
-
 from mesa import Agent
-
 
 class Boid(Agent):
     """A Boid-style flocker agent.
@@ -55,6 +53,7 @@ class Boid(Agent):
         self.separate_factor = separate
         self.match_factor = match
         self.neighbors = []
+        self.crash_count = 0  # Track the number of crashes between Boids
 
     def step(self):
         """Get the Boid's neighbors, compute the new vector, and move accordingly."""
@@ -77,14 +76,15 @@ class Boid(Agent):
             distance = self.model.space.get_distance(self.pos, neighbor.pos)
 
             # Cohesion - steer towards the average position of neighbors
-            cohere += heading
+            cohere += heading  # Sum of directions of neighbors
 
             # Separation - avoid getting too close
             if distance < self.separation:
-                separation_vector -= heading
+                separation_vector -= heading  # Avoid neighbors if too close
+                self.crash_count += 1  # Track collision if boid is too close
 
             # Alignment - match neighbors' flying direction
-            match_vector += neighbor.direction
+            match_vector += neighbor.direction  # Sum of neighbor directions
 
         # Weight each behavior by its factor and normalize by number of neighbors
         n = len(self.neighbors)
@@ -101,3 +101,6 @@ class Boid(Agent):
         # Move boid
         new_pos = self.pos + self.direction * self.speed
         self.model.space.move_agent(self, new_pos)
+        
+        # Optionally, report the crash count at each step
+        print(f"Boid at position {self.pos} has {self.crash_count} crashes.")
